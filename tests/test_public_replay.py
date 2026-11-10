@@ -59,3 +59,12 @@ def test_wrong_duplicate_incomplete_pair_ids_refuse(left,right):
 
 def test_complete_pair_ids():
     module.validate_paired_ids(["q1","q2"],["q1","q2"],["q1","q2"])
+
+def test_post_opening_report_erratum_is_explicit_and_idempotent(tmp_path):
+    (tmp_path/"REPORT.md").write_text("Original frozen report\n")
+    (tmp_path/"ERRATA.md").write_text("29 ambiguous prefixes; 3 semantic validation failures\n")
+    module.append_report_erratum(tmp_path)
+    module.append_report_erratum(tmp_path)
+    text=(tmp_path/"REPORT.md").read_text()
+    assert text.startswith("Original frozen report\n")
+    assert text.count("29 ambiguous prefixes")==1

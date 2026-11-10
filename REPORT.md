@@ -111,3 +111,11 @@ The ranking caches record actual shared-host CPU batch runtimes, query and docum
 With roughly four hundred questions, the worst-case 95% margin for a single independent Bernoulli proportion is about five percentage points. The paired design can be more sensitive when systems make correlated errors. Exact detectable effects depend on discordance; a universal power guarantee is not claimed.
 
 Machine-readable per-query metrics, relevance ids, slice summaries, paired intervals and automatic error categories are in `results/heldout/`. The automated categories distinguish candidate misses from ranking/coverage failures; they are not a manual causal diagnosis.
+
+
+<!-- post-opening-editorial-correction -->
+# Post-opening editorial correction
+
+The frozen report generator labels all 32 excluded questions as ambiguous prefixes. The exact frozen question manifest and preregistration instead record **29 ambiguous-prefix exclusions and 3 semantic-rewording validation failures**. These are 32 total exclusions before the final tuning/freeze. No question, split, model selection, prediction, ranking, metric or confidence interval changes with this correction.
+
+The original frozen generator and recorded artifacts are retained unchanged. The publication adapter appends this dated editorial correction to its regenerated report. This is a reporting repair after opening, not a new analysis or a held-out label repair. Recorded on 10 November 2026.

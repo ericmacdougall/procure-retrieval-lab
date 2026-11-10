@@ -52,3 +52,7 @@ Dense retrieval uses `BAAI/bge-small-en-v1.5`, revision `5c38ec7c405ec4b44b94cc5
 Timing artifacts report the actual workload, thread setting, CPU availability and load average. Cached runs refer to their original measurement. These offline batch measurements do not establish service p95 latency, multi-tenant capacity, throughput under representative production load, or dollar costs.
 
 See `LICENSES.md` for upstream terms. This project's code is MIT licensed. Public data and model weights retain their own licences.
+
+`bash tools/export.sh DESTINATION` (or `make export`) creates a complete code-only distribution, including the original preregistration, post-opening adapters, publication manifests, docs and tests. It omits all experiment data and caches; install the separately checksummed computational-inputs asset to replay it. The frozen historical `src/export_code.py` remains unchanged and is superseded by root `export_public.py` for publication.
+
+See `ERRATA.md` for the post-opening editorial correction: the 32 total exclusions comprise 29 ambiguous prefixes and 3 semantic-rewording validation failures. The frozen report generator's older aggregate label is retained with that correction appended by the publication adapter; results and statistical decisions are unchanged.

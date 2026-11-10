@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-.venv/bin/python src/export_code.py "$@"
+"${PYTHON:-.venv/bin/python}" export_public.py "$@"

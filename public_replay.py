@@ -87,6 +87,12 @@ def audit_archive(root,manifest):
         for p in (root/directory).rglob("*"):
             if p.is_file() and str(p.relative_to(root)) not in allowed:raise ValueError("Unlisted archive input")
 
+def append_report_erratum(root):
+    report=root/"REPORT.md"
+    marker="<!-- post-opening-editorial-correction -->"
+    text=report.read_text()
+    if marker not in text:report.write_text(text+"\n\n"+marker+"\n"+(root/"ERRATA.md").read_text())
+
 def run(root,audit=False):
     os.environ.setdefault("AX11_THREADS","6")
     os.environ.setdefault("OMP_NUM_THREADS",os.environ["AX11_THREADS"])
@@ -101,6 +107,7 @@ def run(root,audit=False):
     expected=[q["id"] for q in qs]
     for command in [[sys.executable,"-m","pytest","-q","tests"],[sys.executable,"src/audit.py","score"],[sys.executable,"src/experiment.py","small-benchmark"],[sys.executable,"src/heldout_eval.py"],[sys.executable,"src/report.py"]]:
         subprocess.run(command,cwd=root,check=True)
+    append_report_erratum(root)
     result=json.loads((root/"results/heldout/results.json").read_text())
     systems=result["systems"]
     base=systems["baseline-bm25"]["qids"]
