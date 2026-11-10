@@ -6,9 +6,11 @@ Tuning code never imports this module's load_heldout (tests/test_guard.py greps 
 import os
 import sys
 import time
+import json
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import ROOT, QDIR, HELDOUT_DIR, read_jsonl
+from common import ROOT, QDIR, HELDOUT_DIR, read_jsonl, sha256_file
 
 FREEZE = os.path.join(QDIR, "FREEZE")
 LOG = os.path.join(ROOT, "logs", "heldout-access.log")
@@ -29,9 +31,24 @@ def load_heldout(who="unknown"):
     if not os.path.exists(FREEZE):
         log("REFUSED(no FREEZE)", who)
         raise HeldoutLocked("held-out is locked until questions/FREEZE exists")
-    log("OPENED", who)
-    os.chmod(HELDOUT_DIR, 0o700)
-    os.chmod(HELDOUT_FILE, 0o600)
+    try:
+        with open(FREEZE) as f:
+            receipt = json.load(f)
+        artifacts = receipt["artifacts"]
+        required = {"heldout/questions.jsonl", "configs/final.json", "PREREG.md"}
+        sources = {str(p.relative_to(ROOT)) for p in Path(ROOT).joinpath("src").glob("*.py")}
+        if receipt.get("version") != 1 or not sources or not (required | sources).issubset(artifacts):
+            raise ValueError("incomplete hash receipt")
+        os.chmod(HELDOUT_DIR, 0o700)
+        os.chmod(HELDOUT_FILE, 0o600)
+        for relative, expected in artifacts.items():
+            path = Path(ROOT).joinpath(relative).resolve()
+            if not path.is_relative_to(Path(ROOT).resolve()) or sha256_file(str(path)) != expected:
+                raise ValueError("hash mismatch: " + relative)
+    except (ValueError, KeyError, OSError, TypeError) as error:
+        log("REFUSED(integrity)", who)
+        raise HeldoutLocked("frozen experiment integrity/hash check failed: " + str(error)) from error
+    log("OPENED verified_hash_receipt", who)
     return read_jsonl(HELDOUT_FILE)
 
 
@@ -52,3 +69,25 @@ def seal():
         os.chmod(os.path.join(HELDOUT_DIR, fn), 0)
     os.chmod(HELDOUT_DIR, 0)
     log("SEALED", "build")
+
+
+def freeze_experiment():
+    """Metadata-only freeze stage; never parses sealed questions or chooses a model."""
+    if os.path.exists(FREEZE):
+        print("Already frozen; evaluator will verify all artifact hashes")
+        return
+    root=Path(ROOT)
+    manifest=json.loads((root/"questions/frozen-manifest.json").read_text())
+    os.chmod(HELDOUT_DIR,0o700)
+    os.chmod(HELDOUT_FILE,0o600)
+    if sha256_file(HELDOUT_FILE)!=manifest["heldout_sha256"]:
+        seal()
+        raise HeldoutLocked("heldout hash changed after question freeze")
+    paths=[root/"configs/final.json",root/"PREREG.md",Path(HELDOUT_FILE)]
+    paths+=list((root/"src").glob("*.py"))+list((root/"questions").glob("*.jsonl"))
+    paths+=[root/"data/ocds/documents.jsonl"]
+    receipt=dict(version=1,timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),
+                 artifacts={str(p.relative_to(root)):sha256_file(str(p)) for p in paths})
+    Path(FREEZE).write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+    seal()
+    print("FROZEN",sha256_file(FREEZE),flush=True)

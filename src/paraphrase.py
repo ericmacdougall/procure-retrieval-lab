@@ -132,6 +132,10 @@ def merge(model_name="claude-subagent"):
     for sp in SPLITS:
         write_jsonl(os.path.join(QDIR, sp + ".jsonl"), [q for q in final if q["split"] == sp])
     guard.build_write(os.path.join(HELDOUT_DIR, "questions.jsonl"), [q for q in final if q["split"] == "heldout"], who="paraphrase.merge")
+    with open(os.path.join(QDIR,"frozen-manifest.json"),"w") as f:
+        json.dump(dict(heldout_sha256=sha256_file(os.path.join(HELDOUT_DIR,"questions.jsonl")),
+                       model=model_name,validation=stat),f,indent=2)
+    guard.seal()
     print(json.dumps(stat, indent=1))
     return stat
 
