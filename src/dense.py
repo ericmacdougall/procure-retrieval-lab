@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import CACHE
 
 MODEL = "BAAI/bge-small-en-v1.5"
+REVISION = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
 QPREFIX = "Represent this sentence for searching relevant passages: "
 MAXLEN = int(os.environ.get("AX11_MAXLEN", "192"))
 SHARD = 2048
@@ -20,7 +21,7 @@ def model(name=MODEL):
         import torch
         from sentence_transformers import SentenceTransformer
         torch.set_num_threads(int(os.environ.get("AX11_THREADS", "16")))
-        _models[name] = SentenceTransformer(name, device="cpu")
+        _models[name] = SentenceTransformer(name, revision=REVISION, device="cpu")
         _models[name].max_seq_length = MAXLEN
     return _models[name]
 

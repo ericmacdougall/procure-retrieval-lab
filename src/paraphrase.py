@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import QDIR, HELDOUT_DIR, ROOT, read_jsonl, write_jsonl, tok, sha256_file
@@ -27,6 +28,16 @@ STYLE = dict(
 
 def ngrams(ws, n=4):
     return set(tuple(ws[i:i + n]) for i in range(len(ws) - n + 1))
+
+
+def proper_name_ngrams(text):
+    """Only contiguous capitalized source names, including small connector words.
+
+    Required named entities cannot be paraphrased without changing the reference.
+    This exemption never applies to ordinary lowercase requirement wording.
+    """
+    pattern=r"\b[A-Z][A-Za-z0-9&’'/-]*(?:(?:\s+(?:and|of|for|the|&))?\s+[A-Z][A-Za-z0-9&’'/-]*)+"
+    return set().union(*(ngrams(tok(match.group())) for match in re.finditer(pattern,text)))
 
 
 def title_words(q):
@@ -87,7 +98,9 @@ def validate(q, p):
     if nw < 5 or nw > 60:
         why.append("length")
     if q["slice"] == "paraphrase-heavy":
-        if len(ngrams(tok(p)) & ngrams(tok(q["text_template"]))) > 1:
+        copied=ngrams(tok(p)) & ngrams(tok(q["text_template"]))
+        copied-=proper_name_ngrams(q["text_template"])
+        if len(copied) > 1:
             why.append("copied_4gram")
     return why
 
@@ -104,9 +117,18 @@ def read_outputs():
 def merge(model_name="claude-subagent"):
     rows, ho = load_template_rows()
     outs = read_outputs()
+    from common import DOCS
+    docs=read_jsonl(DOCS)
+    prefix_counts=Counter(" ".join(tok(" ".join((d.get("description") or "").split()[:24]))) for d in docs)
+    dropped=[]
     stat = dict(n=0, valid=0, missing=0, reasons=dict())
     final = []
     for q in rows + ho:
+        if q["slice"]=="paraphrase-heavy":
+            prefix=" ".join(tok(q["text_template"].split(": ",1)[1]))
+            if prefix_counts[prefix]>1:
+                dropped.append(dict(id=q["id"],split=q["split"],reason="ambiguous_24_word_description_prefix",matching_documents=prefix_counts[prefix]))
+                continue
         stat["n"] += 1
         r = outs.get(q["id"])
         q = dict(q)
@@ -134,7 +156,10 @@ def merge(model_name="claude-subagent"):
     guard.build_write(os.path.join(HELDOUT_DIR, "questions.jsonl"), [q for q in final if q["split"] == "heldout"], who="paraphrase.merge")
     with open(os.path.join(QDIR,"frozen-manifest.json"),"w") as f:
         json.dump(dict(heldout_sha256=sha256_file(os.path.join(HELDOUT_DIR,"questions.jsonl")),
-                       model=model_name,validation=stat),f,indent=2)
+                       model=model_name,validation=stat,counts=dict(Counter(q["split"] for q in final)),
+                       answerable_heldout=sum(q["split"]=="heldout" and bool(q["gold_doc_ids"]) for q in final),
+                       dropped=dropped,
+                       limitation="Ambiguous repeated-prefix questions removed before tuning, making the filtered task easier than the raw query mix; known-source generated-query benchmark only."),f,indent=2)
     guard.seal()
     print(json.dumps(stat, indent=1))
     return stat

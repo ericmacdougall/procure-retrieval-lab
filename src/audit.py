@@ -144,6 +144,14 @@ def cmd_score():
         if fn.startswith("audit-out-"):
             for r in read_jsonl(os.path.join(LLMIO, fn)):
                 outs[r["id"]] = r
+    expected=set()
+    for fn in sorted(os.listdir(LLMIO)):
+        if fn.startswith("audit-in-"):
+            expected.update(q["id"] for q in read_jsonl(os.path.join(LLMIO,fn)))
+    if len(expected)<150 or set(outs)!=expected:
+        raise ValueError("Independent audit requires all >=150 planned judgments, no missing/extra ids")
+    if any(any(v not in ("yes","no") for k,v in r.items() if k in ("sufficient","unique","any_answers")) for r in outs.values()):
+        raise ValueError("Audit judgment must be explicit yes/no")
     qs = dict((q["id"], q) for q in load_all())
     bad = cmd_det()
     per = defaultdict(lambda: [0, 0])

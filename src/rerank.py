@@ -6,7 +6,8 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from render import doc_text
 
-RERANKER = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+RERANKER = "cross-encoder/ms-marco-MiniLM-L6-v2"
+REVISION = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
 _m = dict()
 
 
@@ -14,8 +15,8 @@ def ce(name=RERANKER):
     if name not in _m:
         import torch
         from sentence_transformers import CrossEncoder
-        torch.set_num_threads(int(os.environ.get("AX11_THREADS", "48")))
-        _m[name] = CrossEncoder(name, device="cpu", max_length=256)
+        torch.set_num_threads(int(os.environ.get("AX11_THREADS", "6")))
+        _m[name] = CrossEncoder(name, revision=REVISION, device="cpu", max_length=256)
     return _m[name]
 
 
