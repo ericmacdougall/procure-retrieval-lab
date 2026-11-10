@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+cache/
+data/
+heldout/
+llm-io/
+questions/
+logs/
+results/
+export/
