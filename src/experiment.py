@@ -14,7 +14,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import ROOT, CACHE, SEED, sha256_file, read_jsonl
-from harness import Index, load_docs, load_questions, evaluate, summarise, bm25_rank, dense_rank, DEFAULT
+from harness import Index, load_docs, load_questions, evaluate, summarise, bm25_rank, dense_rank, DEFAULT,validate_rankings
 import fusion
 import metrics
 
@@ -67,14 +67,19 @@ def rank(qs, config, docs):
         config={k:v for k,v in config.items() if k in keep}
     source = sha256_file(str(ROOT / "data/ocds/documents.jsonl"))
     source_code = {p.name: sha256_file(str(p)) for p in (ROOT / "src").glob("*.py")}
+    import dense,rerank
+    runtime=dict(dense_revision=dense.REVISION,dense_maxlen=dense.MAXLEN,reranker_revision=rerank.REVISION,
+                 threads=int(os.getenv("AX11_THREADS","6")))
     queries = [q["query"] for q in qs]
     if config.get("rewrite"):
         from rewrite import rewrite
         queries = [rewrite(x) for x in queries]
-    key = digest(dict(config=config, queries=queries, source=source, code=source_code))
+    key = digest(dict(config=config, queries=queries, source=source, code=source_code,runtime=runtime,
+                     withheld=sha256_file(str(ROOT/"data/docs/withheld_ids.jsonl"))))
     cached = ROOT / "cache/rankings" / (key + ".json")
     if cached.exists():
         prior=json.loads(cached.read_text())
+        validate_rankings(qs,prior["rankings"],{d["doc_id"] for d in docs})
         return prior["rankings"], dict(cached=True, seconds=prior["seconds"], cache_key=key,
                                       note="Seconds from the original measured run; this cache access was not benchmarked")
     chunk = config.get("chunk", DEFAULT["chunk"])
@@ -109,6 +114,7 @@ def rank(qs, config, docs):
         elif system != "hybrid":
             raise ValueError("Unknown system: " + system)
     seconds = time.perf_counter() - start
+    validate_rankings(qs,ranks,{d["doc_id"] for d in docs})
     dump(cached, dict(rankings=ranks, seconds=seconds, config=config,
                      hardware=dict(cpu_count=os.cpu_count(),cpu_affinity=len(os.sched_getaffinity(0)),
                                    threads=int(os.getenv("AX11_THREADS","6")),loadavg=os.getloadavg(),platform=platform.platform()),

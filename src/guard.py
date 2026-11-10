@@ -35,10 +35,12 @@ def load_heldout(who="unknown"):
         with open(FREEZE) as f:
             receipt = json.load(f)
         artifacts = receipt["artifacts"]
-        required = {"heldout/questions.jsonl", "configs/final.json", "PREREG.md"}
+        required = {"heldout/questions.jsonl", "configs/final.json", "PREREG.md","data/docs/withheld_ids.jsonl","requirements.lock.txt"}
         sources = {str(p.relative_to(ROOT)) for p in Path(ROOT).joinpath("src").glob("*.py")}
         if receipt.get("version") != 1 or not sources or not (required | sources).issubset(artifacts):
             raise ValueError("incomplete hash receipt")
+        if receipt.get("runtime")!=runtime_settings():
+            raise ValueError("runtime settings changed after freeze")
         os.chmod(HELDOUT_DIR, 0o700)
         os.chmod(HELDOUT_FILE, 0o600)
         for relative, expected in artifacts.items():
@@ -85,9 +87,27 @@ def freeze_experiment():
         raise HeldoutLocked("heldout hash changed after question freeze")
     paths=[root/"configs/final.json",root/"PREREG.md",Path(HELDOUT_FILE)]
     paths+=list((root/"src").glob("*.py"))+list((root/"questions").glob("*.jsonl"))
-    paths+=[root/"data/ocds/documents.jsonl"]
+    paths+=[root/"data/ocds/documents.jsonl",root/"data/docs/withheld_ids.jsonl",root/"requirements.lock.txt"]
+    paths+=list((root/"cache").glob("emb_*.npy"))
     receipt=dict(version=1,timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),
-                 artifacts={str(p.relative_to(root)):sha256_file(str(p)) for p in paths})
+                 artifacts={str(p.relative_to(root)):sha256_file(str(p)) for p in paths},runtime=runtime_settings())
     Path(FREEZE).write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n")
     seal()
     print("FROZEN",sha256_file(FREEZE),flush=True)
+
+
+def runtime_settings():
+    import dense,rerank,importlib.metadata,platform
+    return dict(dense_revision=dense.REVISION,dense_model=dense.MODEL,dense_maxlen=dense.MAXLEN,
+                query_prefix=dense.QPREFIX,reranker_revision=rerank.REVISION,reranker=rerank.RERANKER,
+                threads=int(os.environ.get("AX11_THREADS","6")),python=platform.python_version(),
+                packages={name:importlib.metadata.version(name) for name in ["numpy","scipy","torch","sentence-transformers","transformers"]})
+
+
+def reopen_for_question_build():
+    if os.path.exists(FREEZE):
+        raise HeldoutLocked("Cannot rebuild questions after experiment freeze")
+    os.chmod(HELDOUT_DIR,0o700)
+    for path in Path(HELDOUT_DIR).glob("*"):
+        os.chmod(path,0o600)
+    log("REOPEN_BUILD_PRE_FREEZE","question-build")

@@ -110,7 +110,7 @@ def gen_paraphrase_heavy(c, d, r):
     if len(desc.split()) < 12 or c.cnt_desc[norm(desc)] != 1:
         return None
     text = "Which contract notice covers this requirement: " + " ".join(desc.split()[:24])
-    return mk("paraphrase-heavy", "ph1", text, [d], d["buyer"], "entity", [], [ev(d, "description")], dict(note="answer is the buyer of the matching notice"))
+    return mk("paraphrase-heavy", "ph1", text, [d], d["title"], "notice-title", [], [ev(d, "description")], dict(note="answer identifies the matching notice title, not its buyer"))
 
 
 def gen_multihop(c, d, r, pool_by_buyer):

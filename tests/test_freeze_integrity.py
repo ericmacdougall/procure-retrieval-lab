@@ -33,8 +33,11 @@ def test_config_mutation_invalidates_frozen_experiment(tmp_path, monkeypatch):
     (root / "PREREG.md").write_text("Metrics fixed in advance")
     (root / "src").mkdir()
     (root / "src/model.py").write_text("value = 1\n")
-    paths = ["heldout/questions.jsonl", "configs/final.json", "PREREG.md", "src/model.py"]
-    receipt = dict(version=1, artifacts={p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in paths})
+    (root / "data/docs").mkdir(parents=True)
+    (root / "data/docs/withheld_ids.jsonl").write_text("")
+    (root / "requirements.lock.txt").write_text("pinned")
+    paths = ["heldout/questions.jsonl", "configs/final.json", "PREREG.md", "src/model.py","data/docs/withheld_ids.jsonl","requirements.lock.txt"]
+    receipt = dict(version=1, artifacts={p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in paths},runtime=guard.runtime_settings())
     (root / "FREEZE").write_text(json.dumps(receipt))
     monkeypatch.setattr(guard, "ROOT", str(root))
     monkeypatch.setattr(guard, "FREEZE", str(root / "FREEZE"))
@@ -56,8 +59,11 @@ def test_valid_frozen_experiment_can_be_reproduced(tmp_path, monkeypatch):
     (root / "PREREG.md").write_text("Fixed metrics")
     (root / "src").mkdir()
     (root / "src/model.py").write_text("value = 1\n")
-    paths = ["heldout/questions.jsonl", "configs/final.json", "PREREG.md", "src/model.py"]
-    receipt = dict(version=1, artifacts={p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in paths})
+    (root / "data/docs").mkdir(parents=True)
+    (root / "data/docs/withheld_ids.jsonl").write_text("")
+    (root / "requirements.lock.txt").write_text("pinned")
+    paths = ["heldout/questions.jsonl", "configs/final.json", "PREREG.md", "src/model.py","data/docs/withheld_ids.jsonl","requirements.lock.txt"]
+    receipt = dict(version=1, artifacts={p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in paths},runtime=guard.runtime_settings())
     (root / "FREEZE").write_text(json.dumps(receipt))
     for name, value in [("ROOT", str(root)), ("FREEZE", str(root / "FREEZE")),
                         ("HELDOUT_FILE", str(root / "heldout/questions.jsonl")),
@@ -65,3 +71,10 @@ def test_valid_frozen_experiment_can_be_reproduced(tmp_path, monkeypatch):
         monkeypatch.setattr(guard, name, value)
     assert guard.load_heldout("first") == [{"id": "x"}]
     assert guard.load_heldout("reproduce-identical") == [{"id": "x"}]
+    with monkeypatch.context() as context:
+        context.setenv("AX11_THREADS","7")
+        with pytest.raises(guard.HeldoutLocked,match="runtime"):
+            guard.load_heldout("changed-runtime")
+    (root/"data/docs/withheld_ids.jsonl").write_text('{"doc_id":"altered-corpus"}\n')
+    with pytest.raises(guard.HeldoutLocked,match="hash"):
+        guard.load_heldout("changed-withholding-mask")

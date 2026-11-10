@@ -111,8 +111,27 @@ def run_system(system, ix, queries, cfg=None):
     raise ValueError(system)
 
 
+def validate_rankings(qs,rankings,corpus_ids=None):
+    if len(qs)!=len(rankings):
+        raise ValueError("question/ranking length mismatch")
+    if len({q["id"] for q in qs})!=len(qs):
+        raise ValueError("question ids must be unique")
+    for q,ranking in zip(qs,rankings):
+        ids=[row[0] for row in ranking]
+        if len(ids)!=len(set(ids)):
+            raise ValueError("ranked document ids must be unique")
+        if any(not np.isfinite(float(row[1])) for row in ranking):
+            raise ValueError("ranked scores must be finite")
+        if len(q["gold_doc_ids"])!=len(set(q["gold_doc_ids"])):
+            raise ValueError("gold document ids must be unique")
+        if corpus_ids is not None:
+            if not (set(ids)|set(q["gold_doc_ids"])).issubset(corpus_ids):
+                raise ValueError("ranked/gold document missing from corpus")
+
+
 def evaluate(qs, rankings):
     """Per-query metrics for answerable questions + top scores for abstention analysis."""
+    validate_rankings(qs,rankings)
     per = dict()
     top = []
     ans = []

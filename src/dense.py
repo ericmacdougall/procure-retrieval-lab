@@ -39,7 +39,7 @@ def encode_texts(texts, name=MODEL, batch=64, prefix=""):
 
 def corpus_embeddings(texts, tag, name=MODEL):
     """Cache key = model + maxlen + hash of the texts.  Shards make an interrupted encode resumable."""
-    h = hashlib.sha256((name + str(MAXLEN) + chr(10).join(texts)).encode("utf-8")).hexdigest()[:16]
+    h = hashlib.sha256((name + REVISION + str(MAXLEN) + chr(10).join(texts)).encode("utf-8")).hexdigest()[:16]
     os.makedirs(CACHE, exist_ok=True)
     fn = os.path.join(CACHE, "emb_%s_%s.npy" % (tag, h))
     if os.path.exists(fn):

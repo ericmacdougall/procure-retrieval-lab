@@ -115,10 +115,12 @@ def read_outputs():
 
 
 def merge(model_name="claude-subagent"):
+    guard.reopen_for_question_build()
     rows, ho = load_template_rows()
     outs = read_outputs()
     from common import DOCS
     docs=read_jsonl(DOCS)
+    by_id={d["doc_id"]:d for d in docs}
     prefix_counts=Counter(" ".join(tok(" ".join((d.get("description") or "").split()[:24]))) for d in docs)
     dropped=[]
     stat = dict(n=0, valid=0, missing=0, reasons=dict())
@@ -132,6 +134,10 @@ def merge(model_name="claude-subagent"):
         stat["n"] += 1
         r = outs.get(q["id"])
         q = dict(q)
+        if q["slice"]=="paraphrase-heavy":
+            q["answer"]=by_id[q["gold_doc_ids"][0]]["title"]
+            q["answer_type"]="notice-title"
+            q["meta"]=dict(q["meta"],note="answer identifies matching notice title, not buyer; corrected by pre-freeze audit")
         if r is None:
             stat["missing"] += 1
             why = ["no_output"]

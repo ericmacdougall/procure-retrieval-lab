@@ -1,0 +1,22 @@
+{
+  "event": "explicit_legacy_cache_reconciliation",
+  "old_file": "emb_plain_128_32_1_29505_0bddd63a5e427250.npy",
+  "new_file": "emb_plain_128_32_1_29505_785ef90cf553f3b1.npy",
+  "sha256": "2335ae040ac4b218fe3e47de23bc389bb718f0c75496342a683c1adb7c1ab2d0",
+  "shape": [
+    37194,
+    384
+  ],
+  "model": "BAAI/bge-small-en-v1.5",
+  "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+  "maxlen": 192,
+  "corpus_sha256": "093de51a75ebb072f825904b1297a86b1b0949db28c62ce1377ae7842e12f1cd",
+  "basis": "Recovered generating source uses BGE main; sole cached local snapshot is pinned revision. Original build log and exact text hash match. Cache retained and exact bytes bound in freeze; this is recovered provenance, not fresh inference.",
+  "fresh_control": {
+    "n": 16,
+    "selection": "equispaced corpus rows, no questions or labels",
+    "max_absolute_difference": 1.1920928955078125e-07,
+    "atol": 2e-05,
+    "allclose": true
+  }
+}
