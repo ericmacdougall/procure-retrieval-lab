@@ -1,0 +1,352 @@
+{
+  "answerability_thresholds": {
+    "baseline-bm25": {
+      "dev_balanced_accuracy": 0.781344537815126,
+      "tau": 33.870521545410156
+    },
+    "baseline-dense": {
+      "dev_balanced_accuracy": 0.7977310924369747,
+      "tau": 0.7745099067687988
+    },
+    "baseline-hybrid": {
+      "dev_balanced_accuracy": 0.8042016806722689,
+      "tau": 0.03278688524590164
+    },
+    "baseline-rerank": {
+      "dev_balanced_accuracy": 0.7466386554621849,
+      "tau": 6.232316970825195
+    },
+    "final-selected": {
+      "dev_balanced_accuracy": 0.8067226890756303,
+      "tau": 0.9983170280329722
+    },
+    "tool-policy": {
+      "dev_balanced_accuracy": 0.926344537815126,
+      "tau": 0.03278688524590164
+    }
+  },
+  "candidates": [
+    {
+      "config": {
+        "system": "bm25"
+      },
+      "name": "baseline-bm25",
+      "ndcg10": 0.9743317522083257,
+      "timing": {
+        "cache_key": "333b5e3e2317c7a342fca0802b5f56157b59ec0d36076a2d2b053b958f6e1612",
+        "cached": false,
+        "seconds": 0.5105466629611328
+      }
+    },
+    {
+      "config": {
+        "system": "dense"
+      },
+      "name": "baseline-dense",
+      "ndcg10": 0.8983158928394295,
+      "timing": {
+        "cache_key": "278128b0bd9a4993821e0562249371c4dd048b3d88b906a4787be4c6de7fd9b7",
+        "cached": false,
+        "seconds": 15.370121410000138
+      }
+    },
+    {
+      "config": {
+        "system": "hybrid"
+      },
+      "name": "baseline-hybrid",
+      "ndcg10": 0.9484871379590644,
+      "timing": {
+        "cache_key": "81a0976b35105368b178949e08ca955d38206925d71f7c860433017c006b7d0c",
+        "cached": false,
+        "seconds": 0.9327966390410438
+      }
+    },
+    {
+      "config": {
+        "rerank_n": 20,
+        "system": "rerank"
+      },
+      "name": "baseline-rerank",
+      "ndcg10": 0.935404633668837,
+      "timing": {
+        "cache_key": "a52313be6475f5147c28cbc2ecd9fd29194c7a8e35a4d2821feeccab62e86116",
+        "cached": false,
+        "seconds": 273.89536245103227
+      }
+    },
+    {
+      "config": {
+        "b": 0.75,
+        "k1": 0.6,
+        "system": "bm25"
+      },
+      "name": "bm25-k0.6-b0.75",
+      "ndcg10": 0.9779880251128056,
+      "timing": {
+        "cache_key": "935d9920e8c70825c7e1ebda5b4e84a97e20a1d131ad3a8a0029e843bc762af0",
+        "cached": false,
+        "seconds": 0.4622765959938988
+      }
+    },
+    {
+      "config": {
+        "b": 0.75,
+        "k1": 2.0,
+        "system": "bm25"
+      },
+      "name": "bm25-k2.0-b0.75",
+      "ndcg10": 0.9679312623883022,
+      "timing": {
+        "cache_key": "66dc843158ef83d596e9d9853b58761b0895f5e2afda82ebeb3a10313c6e85d6",
+        "cached": false,
+        "seconds": 0.47447693697176874
+      }
+    },
+    {
+      "config": {
+        "b": 0.0,
+        "k1": 1.2,
+        "system": "bm25"
+      },
+      "name": "bm25-k1.2-b0.0",
+      "ndcg10": 0.964835038730499,
+      "timing": {
+        "cache_key": "c38ba709f22d2b91947c668fd21c05b03e8df56dd3b1dca9b1fcba5bed6c5d5f",
+        "cached": false,
+        "seconds": 0.43075074499938637
+      }
+    },
+    {
+      "config": {
+        "b": 0.5,
+        "k1": 1.2,
+        "system": "bm25"
+      },
+      "name": "bm25-k1.2-b0.5",
+      "ndcg10": 0.9734622785834962,
+      "timing": {
+        "cache_key": "60c39502f52d1fb042375d819f3294e976aa49a90db055a766d5299db7616563",
+        "cached": false,
+        "seconds": 0.4528926130151376
+      }
+    },
+    {
+      "config": {
+        "b": 1.0,
+        "k1": 1.2,
+        "system": "bm25"
+      },
+      "name": "bm25-k1.2-b1.0",
+      "ndcg10": 0.9733745443996312,
+      "timing": {
+        "cache_key": "4a7a24cd4a4e4e4876e17759ee33a425c57f851f840628e2ddc376ef820d0100",
+        "cached": false,
+        "seconds": 0.4321222100406885
+      }
+    },
+    {
+      "config": {
+        "chunk": {
+          "mode": "plain",
+          "overlap": 16,
+          "prefix_title": true,
+          "size": 64
+        },
+        "system": "bm25"
+      },
+      "name": "chunk-plain-64",
+      "ndcg10": 0.9757654749915429,
+      "timing": {
+        "cache_key": "480fb3483a68954b28bbfc324b3b80a4fdb3ccddda86a157d027085f4e030766",
+        "cached": false,
+        "seconds": 0.5668499420280568
+      }
+    },
+    {
+      "config": {
+        "chunk": {
+          "mode": "plain",
+          "overlap": 64,
+          "prefix_title": true,
+          "size": 256
+        },
+        "system": "bm25"
+      },
+      "name": "chunk-plain-256",
+      "ndcg10": 0.9729867809411181,
+      "timing": {
+        "cache_key": "4860f958d969b6987ddf668e311d8d2410ea9077c1d3ef798b4b145130bb234d",
+        "cached": false,
+        "seconds": 0.3892638090183027
+      }
+    },
+    {
+      "config": {
+        "chunk": {
+          "mode": "field",
+          "overlap": 32,
+          "prefix_title": true,
+          "size": 128
+        },
+        "system": "bm25"
+      },
+      "name": "chunk-field-128",
+      "ndcg10": 0.9587187482164752,
+      "timing": {
+        "cache_key": "f326cfb1e0337341bea0abe452e51c579b200e5e6ff7069917793b7d88b9451e",
+        "cached": false,
+        "seconds": 0.6279287969809957
+      }
+    },
+    {
+      "config": {
+        "rrf_k": 10,
+        "system": "hybrid"
+      },
+      "name": "rrf-10",
+      "ndcg10": 0.9597415967821861,
+      "timing": {
+        "cache_key": "c8d795ce3cefd3a3bb0a5d8afb182199cb9997d47124ca3004a2e8006d61a79a",
+        "cached": false,
+        "seconds": 0.7502823690301739
+      }
+    },
+    {
+      "config": {
+        "rrf_k": 120,
+        "system": "hybrid"
+      },
+      "name": "rrf-120",
+      "ndcg10": 0.9471197392323999,
+      "timing": {
+        "cache_key": "29dcdd1fccd15db11f0f745d5d2367cdeb418cf875bc5fcb1cb30443247ecb57",
+        "cached": false,
+        "seconds": 0.4462354480056092
+      }
+    },
+    {
+      "config": {
+        "fusion": "weighted",
+        "system": "hybrid",
+        "weight": 0.25
+      },
+      "name": "weight-0.25",
+      "ndcg10": 0.9409379566820649,
+      "timing": {
+        "cache_key": "fedf9f838d4aaad9c30865e61476dfa9f77af13c62e2e6b696fb369db29e55d5",
+        "cached": false,
+        "seconds": 1.0979036249918863
+      }
+    },
+    {
+      "config": {
+        "fusion": "weighted",
+        "system": "hybrid",
+        "weight": 0.5
+      },
+      "name": "weight-0.5",
+      "ndcg10": 0.9732466827186114,
+      "timing": {
+        "cache_key": "55e2f91cb1692b9863bd7261b268421de4c47005e58b97fa1aa5582029eba218",
+        "cached": false,
+        "seconds": 0.5844995120423846
+      }
+    },
+    {
+      "config": {
+        "fusion": "weighted",
+        "system": "hybrid",
+        "weight": 0.75
+      },
+      "name": "weight-0.75",
+      "ndcg10": 0.980257730484278,
+      "timing": {
+        "cache_key": "53e7bdfad68b1848358efac1fad9a7d61f94ca665beb81430b869b7e2ed77e17",
+        "cached": false,
+        "seconds": 1.1203117060358636
+      }
+    },
+    {
+      "config": {
+        "rerank_n": 5,
+        "system": "rerank"
+      },
+      "name": "rerank-5",
+      "ndcg10": 0.9445053792103735,
+      "timing": {
+        "cache_key": "215a3f8164e7bdf6623d3cef5a967b584865b9a6bb837d8a946a0bd1241da3de",
+        "cached": false,
+        "seconds": 70.64878878503805
+      }
+    },
+    {
+      "config": {
+        "rerank_n": 10,
+        "system": "rerank"
+      },
+      "name": "rerank-10",
+      "ndcg10": 0.9406089836160352,
+      "timing": {
+        "cache_key": "459a965b1dd2f3e4b76649421047f440c90dfedbc4caba1650d6be3b8c1eb904",
+        "cached": false,
+        "seconds": 139.47174108499894
+      }
+    },
+    {
+      "config": {
+        "rewrite": true,
+        "system": "bm25"
+      },
+      "name": "rewrite-bm25",
+      "ndcg10": 0.976247395873365,
+      "timing": {
+        "cache_key": "8ee86b93074c153fe896c7aad952a2b7e11c0ac7a63bfdfa10e7e8b7410f5f17",
+        "cached": false,
+        "seconds": 0.4463304100208916
+      }
+    },
+    {
+      "config": {
+        "rewrite": true,
+        "system": "hybrid"
+      },
+      "name": "rewrite-hybrid",
+      "ndcg10": 0.9405632325294104,
+      "timing": {
+        "cache_key": "75886e4e59bc67316f8f3cf26e92b2708211b081a695bf0a6774e610a72c3d8d",
+        "cached": false,
+        "seconds": 7.70690446899971
+      }
+    },
+    {
+      "config": {
+        "chunk_depth": 100,
+        "system": "hybrid"
+      },
+      "name": "depth-100",
+      "ndcg10": 0.9491766142556403,
+      "timing": {
+        "cache_key": "d42c3014430c109398205c05d6d1301faf1884f41dfc0a681dfac3804da379d9",
+        "cached": false,
+        "seconds": 9.611472983960994
+      }
+    }
+  ],
+  "n_dev": 695,
+  "primary": "ndcg@10",
+  "selected": {
+    "config": {
+      "fusion": "weighted",
+      "system": "hybrid",
+      "weight": 0.75
+    },
+    "name": "weight-0.75",
+    "ndcg10": 0.980257730484278,
+    "timing": {
+      "cache_key": "53e7bdfad68b1848358efac1fad9a7d61f94ca665beb81430b869b7e2ed77e17",
+      "cached": false,
+      "seconds": 1.1203117060358636
+    }
+  }
+}

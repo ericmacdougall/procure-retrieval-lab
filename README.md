@@ -11,14 +11,22 @@ Run heavy stages on a Linux CPU host with sufficient RAM and disk. The recorded 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.lock.txt --extra-index-url https://download.pytorch.org/whl/cpu
-.venv/bin/python src/verify_data.py
-bash run_lab.sh quick
-bash run_lab.sh lab
 ```
 
-`bash run_lab.sh lab` (also available as `make lab`) starts from the recorded downloaded corpus, frozen blinded question files and independent audit inputs/outputs. It verifies the corpus, runs the focused checks and audit, performs the declared development-only search, records a final configuration and hash receipt, opens the sealed evaluation, and writes `REPORT.md`. After the freeze, rerunning evaluates only the identical hashed experiment; it cannot retune a different model against the same evaluation cases.
+The release asset `computational-inputs-v1.tar.gz` supplies the unchanged normalized corpus, frozen questions, recorded data-only model judgments, embeddings, component/ranking caches, actual outputs and logs. Verify the asset SHA-256 against `PUBLIC_ARTIFACT.json`, then extract it into this checkout and run:
 
-`make bootstrap` fetches the March through August 2024 Contracts Finder award windows. An API can change after a snapshot; `make verify-data` rejects drift instead of silently replacing the experiment. The snapshot manifest, frozen questions and model-inference audit trail are experimental artifacts, separate from large model weights and embedding caches. A code-only checkout does not manufacture missing model judgments or substitute generated labels for an independent audit. Publication of those artifacts is tracked as an explicit delivery gate.
+```sh
+sha256sum computational-inputs-v1.tar.gz
+# Compare with PUBLIC_ARTIFACT.json before extraction.
+tar -xzf computational-inputs-v1.tar.gz
+.venv/bin/python public_replay.py --audit-archive
+```
+
+`public_replay.py` is an explicitly post-opening publication adapter outside the original frozen engine. It checks every archived file before the first run, verifies all original computational freeze hashes and exact runtime, runs the focused tests and recorded audit, repeats the fixed twelve-question demonstration, and executes the unchanged held-out evaluation and report. It selects no new held-out configuration. Later identical replays can omit `--audit-archive` because result/log files have been regenerated; immutable inputs and caches are still verified on every run. These are cached computational replays, not fresh model inference. The exact runtime may require the recorded Python version in addition to the dependency lock.
+
+**Raw provenance check: OMITTED/PUBLICPRIVACY.** The original 344 downloaded government packages are withheld from this public bundle while preserving their unchanged hash manifest and snapshot metadata. Complete computational inputs are present. The raw directory also contained 317 unrelated later-window files, which are not experimental inputs and are not exported. Raw downloads can include unsafe URLs or credential-shaped prose; public origin is not sufficient permission to redistribute credentials. The original private raw archive is retained. `PUBLIC-DATA-PROVENANCE.json` independently traces all matching protected-name occurrences in the normalized corpus to anonymously accessible OGL government releases with exact content hashes. No names, frozen questions or measured values were masked or changed for publication.
+
+The original `bash run_lab.sh lab` (also `make lab`) remains unchanged and performs the full raw-package verification. It requires the original raw packages and was independently replayed successfully in an isolated private extraction. The public adapter does not claim to perform that raw verification. `make bootstrap` downloads the original March–August 2024 award windows, but current API responses can differ from the recorded snapshot; drift is rejected rather than silently replacing the experiment. Model weights are separate downloads under their original licenses.
 
 Question wording was transformed through a subscription model in blinded batches containing only template text and required identity spans, with finite execution receipts. No provider API key is used. Original templates, validated paraphrases, rejected transformations, exact model identifiers and prompt hashes form the audit trail. The held-out text is sealed before tuning. This is an accidental-leakage discipline, not a security boundary against a malicious owner with filesystem access.
 
@@ -33,6 +41,8 @@ Question wording was transformed through a subscription model in blinded batches
 - `results/ax11/`: twelve-question maximization contrast.
 - `results/ax09/` and `results/ax02/`: stable per-topic result references.
 - `logs/runlog.jsonl`: timestamped development decisions and measured runtimes.
+- `public_replay.py`, `public-manifest.json`, `PUBLIC_ARTIFACT.json`: post-opening public replay and exact publication hashes.
+- `PUBLIC-DATA-PROVENANCE.json`: anonymous public source verification for normalized supplier-name matches.
 - `REPORT.md`, `RUNLOG.md`, `LESSONS.md`: walkthroughs derived from the run artifacts.
 
 ## Models and measurement

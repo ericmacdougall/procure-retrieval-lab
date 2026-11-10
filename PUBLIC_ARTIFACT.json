@@ -1,0 +1,10 @@
+{
+  "file": "computational-inputs-v1.tar.gz",
+  "bytes": 167983651,
+  "sha256": "5a5691e0b4089fb5f37f2716ea1319ba4ae05457f5bb5ff3649a3214863fe2c3",
+  "files": 194,
+  "public_manifest_sha256": "483763f0d655e49c4d3ead3562f00c04e8ea718dcebd3202f87693ad791ab84b",
+  "source_ref": "5e3170c7673f74aa40d8f8ad14c3f60d7001ec1e",
+  "raw_status": "OMITTED/PUBLICPRIVACY",
+  "scope": "Complete frozen computational inputs and recorded results; original raw344 provenance packages withheld, original manifest retained; no model weights, agent transcripts, credentials or virtualenv"
+}
