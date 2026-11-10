@@ -151,6 +151,16 @@ def merge(model_name="claude-subagent"):
                 k = w.split(":")[0]
                 stat["reasons"][k] = stat["reasons"].get(k, 0) + 1
         final.append(q)
+    kept=[]
+    for q in final:
+        if q["slice"]=="paraphrase-heavy" and not q["paraphrase_valid"]:
+            dropped.append(dict(id=q["id"],split=q["split"],reason="failed_semantic_rewording_validation_after_one_targeted_repair"))
+        else:
+            kept.append(q)
+    final=kept
+    if sum(q["split"]=="heldout" for q in final)<400:
+        raise ValueError("Question-quality exclusions leave fewer than 400 held-out cases")
+    stat["n_final"]=len(final)
     for sp in SPLITS:
         write_jsonl(os.path.join(QDIR, sp + ".jsonl"), [q for q in final if q["split"] == sp])
     guard.build_write(os.path.join(HELDOUT_DIR, "questions.jsonl"), [q for q in final if q["split"] == "heldout"], who="paraphrase.merge")
