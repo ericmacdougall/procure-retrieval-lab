@@ -42,7 +42,7 @@ def proper_name_ngrams(text):
 
 def title_words(q):
     """Words inside single quotes in the template (the contract title), when present."""
-    m = re.findall(r"'([^']+)'", q["text_template"])
+    m = re.findall(r"(?<!\w)'([^\n]+?)'(?!\w)", q["text_template"])
     return m
 
 
@@ -83,7 +83,7 @@ def validate(q, p):
     for s in q["must_keep"]:
         if s.lower() not in low:
             why.append("missing:" + s[:30])
-    tw = title_words(q)
+    tw = [] if q["slice"]=="paraphrase-heavy" else title_words(q)
     for t in tw:
         toks = [w for w in tok(t)]
         if toks:
@@ -98,8 +98,11 @@ def validate(q, p):
     if nw < 5 or nw > 60:
         why.append("length")
     if q["slice"] == "paraphrase-heavy":
-        copied=ngrams(tok(p)) & ngrams(tok(q["text_template"]))
-        copied-=proper_name_ngrams(q["text_template"])
+        semantic=q.get("semantic_template",q["text_template"])
+        copied=ngrams(tok(p)) & ngrams(tok(semantic))
+        copied-=proper_name_ngrams(semantic)
+        for span in q["must_keep"]:
+            copied-=ngrams(tok(span))
         if len(copied) > 1:
             why.append("copied_4gram")
     return why
@@ -114,23 +117,51 @@ def read_outputs():
     return out
 
 
-def merge(model_name="claude-subagent"):
+def prepare_templates():
     guard.reopen_for_question_build()
     rows, ho = load_template_rows()
-    outs = read_outputs()
     from common import DOCS
+    from relevance import repair_questions
     docs=read_jsonl(DOCS)
     by_id={d["doc_id"]:d for d in docs}
     prefix_counts=Counter(" ".join(tok(" ".join((d.get("description") or "").split()[:24]))) for d in docs)
     dropped=[]
-    stat = dict(n=0, valid=0, missing=0, reasons=dict())
-    final = []
+    keep=[]
     for q in rows + ho:
         if q["slice"]=="paraphrase-heavy":
             prefix=" ".join(tok(q["text_template"].split(": ",1)[1]))
             if prefix_counts[prefix]>1:
                 dropped.append(dict(id=q["id"],split=q["split"],reason="ambiguous_24_word_description_prefix",matching_documents=prefix_counts[prefix]))
                 continue
+        keep.append(q)
+    withheld={r["doc_id"] for r in read_jsonl(os.path.join(ROOT,"data/docs/withheld_ids.jsonl"))}
+    prepared,changes,exclusions=repair_questions(keep,docs,withheld)
+    dropped+=exclusions
+    for q in prepared:
+        if q["slice"]=="paraphrase-heavy":
+            doc=by_id[q["gold_doc_ids"][0]]
+            q["semantic_template"]=q["text_template"]
+            q["text_template"]=q["text"]
+            q["must_keep"]=list(dict.fromkeys(q["must_keep"]+[doc["buyer"]]+([doc["award_date"]] if doc.get("award_date") else [])))
+    return prepared,dropped,changes,by_id
+
+
+def identity_batches():
+    prepared,_,_,_=prepare_templates()
+    rows=[q for q in prepared if q["slice"]=="paraphrase-heavy"]
+    for start in range(0,len(rows),100):
+        output=[dict(id=q["id"],style=STYLE["heavy"],question=q["text_template"],must_keep=q["must_keep"]) for q in rows[start:start+100]]
+        write_jsonl(os.path.join(LLMIO,"paraphrase-in-%03d.jsonl"%(991+start//100)),output)
+    print("identity clarification blinded batches",len(rows))
+    guard.seal()
+
+
+def merge(model_name="claude-subagent"):
+    rows,dropped,changes,by_id=prepare_templates()
+    outs=read_outputs()
+    stat = dict(n=0, valid=0, missing=0, reasons=dict())
+    final=[]
+    for q in rows:
         stat["n"] += 1
         r = outs.get(q["id"])
         q = dict(q)
@@ -156,6 +187,8 @@ def merge(model_name="claude-subagent"):
             for w in why:
                 k = w.split(":")[0]
                 stat["reasons"][k] = stat["reasons"].get(k, 0) + 1
+        if q["slice"]!="paraphrase-heavy" and q.get("identity_clarification"):
+            q["text"]+=" "+q["identity_clarification"]
         final.append(q)
     kept=[]
     for q in final:
@@ -174,8 +207,8 @@ def merge(model_name="claude-subagent"):
         json.dump(dict(heldout_sha256=sha256_file(os.path.join(HELDOUT_DIR,"questions.jsonl")),
                        model=model_name,validation=stat,counts=dict(Counter(q["split"] for q in final)),
                        answerable_heldout=sum(q["split"]=="heldout" and bool(q["gold_doc_ids"]) for q in final),
-                       dropped=dropped,
-                       limitation="Ambiguous repeated-prefix questions removed before tuning, making the filtered task easier than the raw query mix; known-source generated-query benchmark only."),f,indent=2)
+                       dropped=dropped,identity_repairs=changes,
+                       limitation="Ambiguous repeated-prefix questions removed and buyer/date qualifiers added globally before the final development search, making the task easier than raw user queries. Legal-name/title/period/value-equivalent record versions count as one required fact group; multi-hop groups remain distinct. Known-source generated-query registry retrieval only."),f,indent=2)
     guard.seal()
     print(json.dumps(stat, indent=1))
     return stat
@@ -186,3 +219,5 @@ if __name__ == "__main__":
         batches()
     elif sys.argv[1] == "merge":
         merge(*sys.argv[2:3])
+    elif sys.argv[1] == "identity-batches":
+        identity_batches()

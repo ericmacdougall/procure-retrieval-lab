@@ -120,7 +120,8 @@ def cmd_packets():
     ranks = bm25_rank(ix, [q["text"] for q in sample], depth=8)
     rows = []
     for q, rk in zip(sample, ranks):
-        gold = q["gold_doc_ids"]
+        groups=q.get("relevance_groups",[[g] for g in q["gold_doc_ids"]])
+        gold = list(dict.fromkeys(g for group in groups for g in group))
         others = [d for d, _ in rk if d not in gold][:3 if gold else 5]
         labelled = [(d, "gold") for d in gold] + [(d, "other") for d in others]
         r.shuffle(labelled)
@@ -128,6 +129,7 @@ def cmd_packets():
                          proposed_answer=q["answer"],
                          docs=[dict(label="D%d" % (i + 1), text=doc_text(ix.doc_by_id[d])) for i, (d, role) in enumerate(labelled)],
                          claimed=[ "D%d" % (i + 1) for i, (d, role) in enumerate(labelled) if role == "gold"],
+                         required_fact_groups=[["D%d"%(i+1) for i,(d,role) in enumerate(labelled) if d in group] for group in groups],
                          _roles=[role for _, role in labelled]))
     meta = [dict(id=x["id"], roles=x.pop("_roles")) for x in rows]
     write_jsonl(os.path.join(ROOT, "results", "audit-sample.jsonl"), meta)

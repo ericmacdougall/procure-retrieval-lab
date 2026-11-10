@@ -124,8 +124,14 @@ def validate_rankings(qs,rankings,corpus_ids=None):
             raise ValueError("ranked scores must be finite")
         if len(q["gold_doc_ids"])!=len(set(q["gold_doc_ids"])):
             raise ValueError("gold document ids must be unique")
+        groups=q.get("relevance_groups",[[g] for g in q["gold_doc_ids"]])
+        if len(groups)!=len(q["gold_doc_ids"]) or any(not g for g in groups):
+            raise ValueError("Each required source must have one nonempty equivalence group")
+        members=[x for group in groups for x in group]
+        if len(members)!=len(set(members)):
+            raise ValueError("Equivalence groups must be disjoint")
         if corpus_ids is not None:
-            if not (set(ids)|set(q["gold_doc_ids"])).issubset(corpus_ids):
+            if not (set(ids)|set(q["gold_doc_ids"])|set(members)).issubset(corpus_ids):
                 raise ValueError("ranked/gold document missing from corpus")
 
 
@@ -137,6 +143,10 @@ def evaluate(qs, rankings):
     ans = []
     for q, r in zip(qs, rankings):
         ids = [x[0] for x in r]
+        groups=q.get("relevance_groups",[[g] for g in q["gold_doc_ids"]])
+        mapping={member:gold for gold,group in zip(q["gold_doc_ids"],groups) for member in group}
+        # One equivalent notice can satisfy its fact group, but redundant aliases never earn extra credit.
+        ids=list(dict.fromkeys(mapping.get(doc_id,doc_id) for doc_id in ids))
         top.append(r[0][1] if r else 0.0)
         gold = q["gold_doc_ids"]
         ans.append(bool(gold))
